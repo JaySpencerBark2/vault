@@ -2,14 +2,23 @@
   <div class="dashboard-wrapper">
     <v-toolbar flat class="mb-4 dashboard-toolbar" density="comfortable">
       <v-toolbar-title class="text-h6 d-flex align-center">
-        <v-icon size="20" class="mr-2">mdi-safe-square</v-icon>
-        Your Vaults
+        <v-icon size="20" class="mr-2">mdi-account-group</v-icon>
+        Group Vaults
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn color="primary" prepend-icon="mdi-plus" @click="createVault" variant="flat">New Vault</v-btn>
+      <v-btn color="primary" prepend-icon="mdi-plus" variant="flat" :disabled="!myGroups.length" @click="createGroupVault">New Group Vault</v-btn>
     </v-toolbar>
 
     <v-container fluid>
+      <v-row v-if="!myGroups.length">
+        <v-col cols="12">
+          <v-card class="pa-6 text-center" elevation="1">
+            <v-icon size="32" class="mb-2 text-medium-emphasis">mdi-account-group-outline</v-icon>
+            <div class="text-medium-emphasis">You are not a member of any group yet.</div>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <v-row>
         <v-col
           v-for="vault in vaults"
@@ -24,6 +33,7 @@
                   <v-icon color="warning" size="20" class="mr-2">mdi-lock</v-icon>
                   <span class="font-weight-medium text-truncate">{{ vault.vh_vaultName }}</span>
                 </div>
+                <v-chip size="x-small" color="primary" variant="tonal" label>{{ vault.gr_groupName }}</v-chip>
               </div>
             </v-card-item>
             <v-divider></v-divider>
@@ -51,6 +61,7 @@
                 <div class="d-flex align-center mr-2">
                   <v-icon color="success" size="20" class="mr-2">mdi-lock-open-variant</v-icon>
                   <span class="font-weight-medium text-truncate">{{ vault.vh_vaultName }}</span>
+                  <v-chip size="x-small" color="primary" variant="tonal" class="ml-2" label>{{ vault.gr_groupName }}</v-chip>
                 </div>
                 <div class="d-flex align-center actions-inline">
                   <v-chip size="x-small" color="primary" variant="tonal" class="mr-2" label>
@@ -108,9 +119,9 @@
     ref="refCreateItem"
     @refreshVaultLines="handleNewVaultLines"
   />
-  <create-vault-dialog
-    ref="createVaultDialog"
-    @newVaultHandler="newVaultHandler"
+  <create-group-vault-dialog
+    ref="createGroupVaultDialog"
+    @newGroupVaultHandler="newGroupVaultHandler"
   />
   <view-record
     ref="viewRecordDialog"
@@ -120,17 +131,18 @@
 
 <script>
 import ViewRecord from "@/components/ViewRecord.vue";
-import CreateVaultDialog from "@/components/CreateVaultDialog.vue";
+import CreateGroupVaultDialog from "@/components/CreateGroupVaultDialog.vue";
 import globalFunctions from "@/classes/globalFunctions.js";
 import CreateListItem from "@/components/CreateListItem.vue";
 
 export default {
   components: {
-    CreateVaultDialog,
+    CreateGroupVaultDialog,
     CreateListItem,
   },
   data: () => {
     return {
+      myGroups: [],
       vaults: [],
       passwords: {},
       isUnlocked: {},
@@ -145,15 +157,40 @@ export default {
   },
 
   methods: {
-    createVault() {
-      this.$refs.createVaultDialog.openDialog();
+    createGroupVault() {
+      this.$refs.createGroupVaultDialog.openDialog(this.myGroups);
+    },
+
+    async fetchMyGroups(userSyskey) {
+      try {
+        let response = await fetch(
+          `http://localhost:3000/group-vaults/get/my/groups/${userSyskey}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch groups");
+        }
+
+        this.myGroups = await response.json();
+      } catch (error) {
+        console.log(error);
+      }
     },
 
     async fetchVaults() {
       try {
         let user = await globalFunctions.getCurrentLoggedInUser();
+        await this.fetchMyGroups(user.us_syskey);
+
         let response = await fetch(
-          `http://localhost:3000/dashboard/get/all/${user.us_syskey}`,
+          `http://localhost:3000/group-vaults/get/all/${user.us_syskey}`,
           {
             method: "GET",
             headers: {
@@ -263,9 +300,9 @@ export default {
       this.$refs.refCreateItem.openCreateListItemDialog(headerSykey);
     },
 
-    async newVaultHandler() {
+    async newGroupVaultHandler() {
       this.$toast.open({
-        message: 'Vault created successfully!',
+        message: 'Group vault created successfully!',
         type: 'success',
         color: 'success',
         position: 'top-right',

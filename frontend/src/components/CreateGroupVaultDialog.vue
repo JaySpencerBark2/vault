@@ -3,14 +3,25 @@
     <v-dialog v-model="dialog" max-width="500px">
         <v-card>
           <v-card-title class="d-flex align-center">
-            <v-icon size="20" class="mr-2">mdi-safe-square</v-icon>
-            <span class="headline">Create Vault</span>
+            <v-icon size="20" class="mr-2">mdi-account-group</v-icon>
+            <span class="headline">Create Group Vault</span>
           </v-card-title>
           <v-divider></v-divider>
           <v-form ref="form">
           <v-card-text>
             <v-container>
               <v-row>
+                <v-col cols="12">
+                  <v-select
+                    v-model="vault.vh_groupSyskey"
+                    :items="groups"
+                    item-title="gr_groupName"
+                    item-value="gr_groupSyskey"
+                    label="Group"
+                    :rules="[v => !!v || 'Group is required']"
+                    required
+                  ></v-select>
+                </v-col>
                 <v-col cols="12">
                   <v-text-field
                     v-model="vault.vh_vaultName"
@@ -32,7 +43,6 @@
                   <v-text-field
                     v-model="vault.vh_vaultPasswordConfrim"
                     label="Confirm Password"
-
                     :rules="[
                       (v) =>
                         v === vault.vh_vaultPassword || 'Passwords must match',
@@ -44,7 +54,6 @@
                 </v-col>
               </v-row>
             </v-container>
-
           </v-card-text>
         </v-form>
           <v-card-actions>
@@ -58,10 +67,11 @@
 </template>
 
 <script>
-import globalFunctions from "@/classes/globalFunctions.js"; // Removed unused import
+import globalFunctions from "@/classes/globalFunctions.js";
 export default {
   data: () => ({
     dialog: false,
+    groups: [],
     vault: {},
   }),
   methods: {
@@ -70,8 +80,6 @@ export default {
     },
     async createVault() {
       try {
-
-        //strange vutify 3 stuff here really wierd
         let isValid = await this.$refs.form.validate();
         if(!isValid.valid) {
           return;
@@ -88,17 +96,19 @@ export default {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create vault");
+          throw new Error("Failed to create group vault");
         }
 
-        this.$emit("newVaultHandler");
+        this.$emit("newGroupVaultHandler");
         this.closeDialog();
       } catch (error) {
         console.log(error);
       }
     },
 
-    openDialog() {
+    openDialog(groups) {
+      this.groups = groups || [];
+      this.vault = {};
       this.dialog = true;
     },
   },

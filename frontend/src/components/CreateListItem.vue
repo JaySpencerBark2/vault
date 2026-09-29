@@ -2,9 +2,11 @@
   <div>
     <v-dialog v-model="openDialog">
       <v-card>
-        <v-card-title class="text-center" >
+        <v-card-title class="d-flex align-center">
+          <v-icon size="20" class="mr-2">mdi-key-plus</v-icon>
           Create Vault Record
         </v-card-title>
+        <v-divider></v-divider>
         <v-card-text>
           <v-form ref="form">
             <v-row>
@@ -47,8 +49,9 @@
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="closeCreateListItemDialog" color="error"> Cancel </v-btn>
-          <v-btn color="primary" @click="createListItem"> Create </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="closeCreateListItemDialog"> Cancel </v-btn>
+          <v-btn color="primary" variant="flat" prepend-icon="mdi-check" @click="createListItem"> Create </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

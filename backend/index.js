@@ -8,6 +8,9 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const cors = require('cors');
 const login = require('./routes/login');
 const dashboard = require('./routes/dashboard');
+const users = require('./routes/users');
+const groups = require('./routes/groups');
+const groupVaults = require('./routes/group-vaults');
 const bcrypt = require('bcrypt');
 const app = express();
 const fs = require('fs');
@@ -111,6 +114,13 @@ function ensureAuthenticated(req, res, next) {
     res.status(401).send('Unauthorized');
 }
 
+function ensureAdmin(req, res, next) {
+    if (req.isAuthenticated() && req.user.admin) {
+        return next();
+    }
+    res.status(403).send('Forbidden');
+}
+
 app.get("/check/user/is/authenticated", (req, res) => {
     let auth = req.isAuthenticated();
     if (auth) {
@@ -124,11 +134,23 @@ app.get("/check/user/is/authenticated", (req, res) => {
 app.use('/login', login);
 app.use(ensureAuthenticated);
 app.use('/dashboard', dashboard);
+app.use('/group-vaults', groupVaults);
+app.use('/users', ensureAdmin, users);
+app.use('/groups', ensureAdmin, groups);
 
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+
+function shutdown() {
+    server.close(() => {
+        process.exit(0);
+    });
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 
 

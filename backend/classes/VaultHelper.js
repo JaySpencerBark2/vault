@@ -10,14 +10,15 @@ class VaultHelper {
     let password = await this.#encryptPassword(data.vh_vaultPassword);
     return new Promise((resolve, reject) => {
       const query = `
-            INSERT INTO VA_VaultHeader(vh_vaultheadSyskey, vh_vaultName, vh_vaultPassword, vh_userSyskey, vh_createdAt, vh_updatedAt)
-            VALUES(?, ?, ?, ?, ?, ?);
+            INSERT INTO VA_VaultHeader(vh_vaultheadSyskey, vh_vaultName, vh_vaultPassword, vh_userSyskey, vh_groupSyskey, vh_createdAt, vh_updatedAt)
+            VALUES(?, ?, ?, ?, ?, ?, ?);
             `;
       const params = [
         uuid(),
         data.vh_vaultName,
         password,
         data.vh_userSyskey,
+        data.vh_groupSyskey || null,
         new Date(),
         new Date(),
       ];
@@ -33,11 +34,33 @@ class VaultHelper {
   async getAllVaultInstances(syskey) {
     return new Promise((resolve, reject) => {
       const query = `
-            SELECT * FROM VA_VaultHeader WHERE vh_userSyskey = ?
+            SELECT * FROM VA_VaultHeader WHERE vh_userSyskey = ? AND vh_groupSyskey IS NULL
             `;
 
       let params = [syskey];
       db.all(query, params, function (err, rows) {
+        if (err) {
+          return reject(err);
+        }
+        resolve(rows);
+      });
+    });
+  }
+
+  async getGroupVaultInstances(groupSyskeys) {
+    return new Promise((resolve, reject) => {
+      if (!groupSyskeys || groupSyskeys.length === 0) {
+        return resolve([]);
+      }
+
+      const placeholders = groupSyskeys.map(() => "?").join(",");
+      const query = `
+            SELECT vh.*, g.gr_groupName FROM VA_VaultHeader vh
+            LEFT JOIN VA_Groups g ON g.gr_groupSyskey = vh.vh_groupSyskey
+            WHERE vh.vh_groupSyskey IN (${placeholders})
+            `;
+
+      db.all(query, groupSyskeys, function (err, rows) {
         if (err) {
           return reject(err);
         }
@@ -115,12 +138,14 @@ class VaultHelper {
       const query = `
             UPDATE VA_VaultLines SET
               vh_lineContent = ?,
+              vl_expiresAt = ?,
+              vl_expired = 0,
               vh_updatedAt = ?
             WHERE vh_lineSyskey = ?;
             `;
       const rawContent = data.vl_lineContent || data.vh_lineContent || "";
       const encryptedContent = this.#encryptContent(rawContent);
-      const params = [encryptedContent, new Date(), syskey];
+      const params = [encryptedContent, data.vl_expiresAt || null, new Date(), syskey];
       db.run(query, params, function (err) {
         if (err) {
           return reject(err);

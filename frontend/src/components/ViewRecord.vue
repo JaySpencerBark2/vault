@@ -1,8 +1,12 @@
 <template>
   <div>
     <v-dialog v-model="openViewDialog">
-      <v-card class="text-center">
-        <v-card-title> Record Name: {{ record.vh_lineName }} </v-card-title>
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon size="20" class="mr-2">mdi-key-variant</v-icon>
+          {{ record.vh_lineName }}
+        </v-card-title>
+        <v-divider></v-divider>
         <v-card-text>
           <v-form ref="form">
             <v-row>
@@ -38,9 +42,11 @@
           </v-form>
         </v-card-text>
         <!-- Note for jay add descript in crud and otehr stuff not finsiehd-->
+        <v-divider></v-divider>
         <v-card-actions>
-          <v-btn text @click="closeViewRecordDialog">Close</v-btn>
-          <v-btn text color="primary" @click="editRecord">Edit</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="closeViewRecordDialog">Close</v-btn>
+          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save" @click="editRecord">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

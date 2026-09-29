@@ -6,10 +6,9 @@
       <v-card-text>
         <v-form>
           <v-text-field
-            v-model="email"
-            label="Email"
-            prepend-icon="mdi-email"
-            type="email"
+            v-model="username"
+            label="Username"
+            prepend-icon="mdi-account"
             clearable
             required
           />
@@ -36,7 +35,7 @@
 export default {
   data() {
     return {
-      email: "",
+      username: "",
       password: "",
     };
   },
@@ -50,7 +49,7 @@ export default {
           method: "POST",
           credentials: "include",
           body: JSON.stringify({
-            username: this.email,
+            username: this.username,
             password: this.password,
           }),
         });
@@ -60,15 +59,14 @@ export default {
         } else {
           this.$toast.open({
             message: "Invalid credentials",
-            type: "is-danger",
+            type: "error",
             color: "red",
             position: "top",
             duration: 3000,
             closeOnClick: true,
             dismissible: true,
           });
-          this.$router.push('/');
-         
+
           throw new Error("Invalid credentials");
         }
       } catch (error) {

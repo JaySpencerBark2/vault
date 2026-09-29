@@ -1,0 +1,3 @@
+ALTER TABLE VA_VaultLines ADD COLUMN vl_description TEXT DEFAULT '';
+ALTER TABLE VA_VaultLines ADD COLUMN vl_expiresAt DATE DEFAULT NULL;
+ALTER TABLE VA_VaultLines ADD COLUMN vl_expired BOOLEAN DEFAULT false;
